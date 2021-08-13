@@ -637,7 +637,7 @@ def check_md5(filename, md5_hash, print_message=True):
     return ret_val
 
 def touch_flag(filename, flag):
-    open(filename+"."+flag, "w").write()
+    open(filename+"."+flag, "w").write("")
 
 def remove_flag(filename, t):
     flag_dict = {"md5": ["md5_ok", "md5_fail"], "sizeInBytes": ["sizeInBytes_ok", "sizeInBytes_fail"]}
