@@ -617,35 +617,55 @@ def check_md5(filename, md5_hash, print_message=True):
         message = "INFO: No MD5 hash listed for {}; skipping check".format(filename)
         ret_val = True
     else:
+        remove_flag(filename, "md5")
         file_md5 = get_md5(filename)
         if file_md5 == md5_hash:
             message = (
                 "SUCCESS: MD5 hashes match for {} ({})".format(filename, md5_hash))
             ret_val = True
+            touch_flag(filename, "md5_ok")
         else:
             message = ("ERROR: MD5 hash mismatch for {} (local: {}, remote: {})"
                     .format(filename, file_md5, md5_hash))
             ret_val = False
+            touch_flag(filename, "md5_fail")
     
     if print_message is True:
         print(message)
     
     return ret_val
+
+def touch_flag(filename, flag):
+    open(filename+"."+flag, "w").write()
+
+def remove_flag(filename, t):
+    flag_dict = {"md5": ["md5_ok", "md5_fail"], "sizeInBytes": ["sizeInBytes_ok", "sizeInBytes_fail"]}
+    if t not in flag_dict:
+        sys.exit(print(f"error: not support {t}, only md5 or sizeInBytes!"))
+    for flag in flag_dict[t] + ["waiting_hand_check"]:
+        flag = f"{filename}.{flag}"
+        if os.path.exists(flag):
+            os.remove(flag)
 
 def check_sizeInBytes(filename, sizeInBytes, print_message=True):
     if not sizeInBytes:
         message = "INFO: No sizeInBytes listed for {}; skipping check".format(filename)
         ret_val = True
+        touch_flag(filename, "waiting_hand_check")
     else:
+        remove_flag(filename, "sizeInBytes")
         file_sizeInBytes = get_sizeInBytes(filename)
         if file_sizeInBytes == sizeInBytes:
             message = (
                 "SUCCESS: sizeInBytes match for {} ({})".format(filename, sizeInBytes))
             ret_val = True
+            touch_flag(filename, "sizeInBytes_ok")
+            
         else:
             message = ("ERROR: sizeInBytes mismatch for {} (local: {}, remote: {})"
                     .format(filename, file_sizeInBytes, sizeInBytes))
             ret_val = False
+            touch_flag(filename, "sizeInBytes_fail")
     
     if print_message is True:
         print(message)
@@ -653,7 +673,7 @@ def check_sizeInBytes(filename, sizeInBytes, print_message=True):
     return ret_val
     
 
-def download_from_url(url, timeout=120, retry=0, min_file_bytes=20, url_to_validate={}):
+def download_from_url(url, timeout=120000, retry=0, min_file_bytes=20, url_to_validate={}):
     """
     Attempts to download a file from JGI servers using cURL.
 
@@ -729,7 +749,7 @@ def get_regex():
     return re.compile(pattern)
 
 
-def retry_from_failed(login_cmd, fail_log, timeout=120, retries=3):
+def retry_from_failed(login_cmd, fail_log, timeout=120000, retries=3):
     """
     Try to download from URLs in a previously-generated log file.
     
@@ -764,7 +784,7 @@ def log_failed(organism, failed_urls):
         f.write('\n'.join(failed_urls))
 
 
-def download_list(url_list, url_to_validate={}, timeout=120, retries=3):
+def download_list(url_list, url_to_validate={}, timeout=120000, retries=3):
     """
     Attempts download command on a list of partial file
     URLs (completed by download_from_url()).
